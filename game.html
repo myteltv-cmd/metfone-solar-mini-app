@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eaf7ff">
+  <title>Ken né chổi – Trò chơi vui</title>
+  <style>
+    :root { color-scheme: light; font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: #17304a; background: #eaf7ff; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; padding: 28px 18px 36px; background: linear-gradient(160deg, #dff4ff, #f7fbff 54%, #fff2d6); }
+    .page { width: min(940px, 100%); margin: 0 auto; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .back-link { color: #315a7d; font-size: .95rem; font-weight: 700; text-decoration: none; }
+    .back-link:hover { color: #e04b3d; }
+    .tag { padding: 7px 12px; border-radius: 999px; background: #fff; color: #4a7898; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; box-shadow: 0 3px 12px rgba(49,90,125,.08); }
+    .game-card { overflow: hidden; border: 1px solid rgba(255,255,255,.9); border-radius: 28px; background: rgba(255,255,255,.86); box-shadow: 0 22px 60px rgba(49,90,125,.16); }
+    .intro { padding: clamp(22px,5vw,42px) clamp(20px,5vw,44px) 20px; text-align: center; }
+    h1 { margin: 0 0 10px; color: #17304a; font-size: clamp(2rem,6vw,3rem); letter-spacing: -.04em; }
+    .intro p { max-width: 540px; margin: 0 auto; color: #5b7488; font-size: clamp(.95rem,2.5vw,1.08rem); line-height: 1.6; }
+    .game-shell { position: relative; overflow: hidden; margin: 0 clamp(12px,2.5vw,24px); border-radius: 20px; background: #bceaff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.7); }
+    canvas { display: block; width: 100%; height: auto; aspect-ratio: 900 / 420; touch-action: manipulation; }
+    .overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(20,54,80,.28); text-align: center; }
+    .overlay[hidden] { display: none; }
+    .overlay-card { width: min(340px,100%); padding: 24px 22px; border: 1px solid rgba(255,255,255,.9); border-radius: 22px; background: rgba(255,255,255,.96); box-shadow: 0 12px 35px rgba(23,48,74,.2); }
+    .overlay-card h2 { margin: 0 0 8px; font-size: clamp(1.35rem,4vw,1.8rem); }
+    .overlay-card p { margin: 0 0 18px; color: #5b7488; line-height: 1.5; }
+    button { min-height: 48px; padding: 12px 24px; border: 0; border-radius: 999px; background: #f05b48; color: #fff; font: inherit; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 5px 0 #cf4438, 0 8px 18px rgba(240,91,72,.25); transition: transform .12s ease, box-shadow .12s ease; touch-action: manipulation; }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(3px); box-shadow: 0 2px 0 #cf4438; }
+    button:focus-visible, a:focus-visible { outline: 3px solid #1976a7; outline-offset: 4px; }
+    .game-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px clamp(20px,4vw,40px) 24px; }
+    .help { color: #5b7488; font-size: .9rem; line-height: 1.5; }
+    .jump-button { min-width: 126px; }
+    .jump-button:disabled { opacity: .58; cursor: not-allowed; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 560px) {
+      body { padding: 18px 12px 26px; }
+      .topbar { margin-bottom: 14px; }
+      .game-card { border-radius: 22px; }
+      .game-shell { margin: 0 10px; border-radius: 14px; }
+      .game-footer { align-items: stretch; flex-direction: column; padding-top: 14px; }
+      .help { text-align: center; }
+      .jump-button { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <nav class="topbar" aria-label="Điều hướng">
+      <a class="back-link" href="index.html">← Về trang Metfone Solar</a>
+      <span class="tag">Trò chơi vui</span>
+    </nav>
+    <section class="game-card" aria-labelledby="game-title">
+      <header class="intro">
+        <h1 id="game-title">Ken né chổi!</h1>
+        <p>Giúp Ken nhảy qua những chiếc chổi đang lăn tới. Né được càng lâu, điểm số càng cao!</p>
+      </header>
+      <div class="game-shell">
+        <canvas id="game" width="900" height="420" aria-label="Ken chạy và nhảy qua chổi"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="overlay-card">
+            <h2 id="overlay-title">Sẵn sàng chưa?</h2>
+            <p id="overlay-message">Nhấn nút bên dưới để bắt đầu cuộc phiêu lưu của Ken.</p>
+            <button id="start-button" type="button">Bắt đầu chơi</button>
+          </div>
+        </div>
+      </div>
+      <div class="game-footer">
+        <div class="help">Nhấn <strong>Space</strong> hoặc <strong>↑</strong> để nhảy. Trên điện thoại, chạm màn hình hoặc nút NHẢY.</div>
+        <button class="jump-button" id="jump-button" type="button" disabled>NHẢY</button>
+      </div>
+      <p class="visually-hidden" id="game-status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.getElementById("overlay");
+      const overlayTitle = document.getElementById("overlay-title");
+      const overlayMessage = document.getElementById("overlay-message");
+      const startButton = document.getElementById("start-button");
+      const jumpButton = document.getElementById("jump-button");
+      const status = document.getElementById("game-status");
+      const width = 900;
+      const height = 420;
+      const groundY = 346;
+      const kenX = 155;
+      let state = "ready";
+      let score = 0;
+      let best = 0;
+      let speed = 360;
+      let nextBroomAt = 560;
+      let lastTime = 0;
+      let frame = 0;
+      let kenY = groundY;
+      let kenVelocity = 0;
+      let runTime = 0;
+      let distance = 0;
+      let brooms = [];
+
+      function resizeCanvas() {
+        const bounds = canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = Math.round(bounds.width * ratio);
+        canvas.height = Math.round(bounds.width * height / width * ratio);
+        ctx.setTransform(canvas.width / width, 0, 0, canvas.height / height, 0, 0);
+        draw();
+      }
+
+      function roundedRect(x, y, w, h, radius) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, radius);
+      }
+
+      function drawBackground() {
+        const sky = ctx.createLinearGradient(0, 0, 0, height);
+        sky.addColorStop(0, "#a9e5ff");
+        sky.addColorStop(.72, "#e5f8ff");
+        sky.addColorStop(1, "#c8edcf");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = "rgba(255,255,255,.72)";
+        [[115,86,34],[690,104,27],[790,62,19]].forEach(([x,y,r]) => {
+          ctx.beginPath();
+          ctx.arc(x,y,r,0,Math.PI*2);
+          ctx.arc(x+r,y-10,r*.8,0,Math.PI*2);
+          ctx.arc(x+r*2,y,r*.68,0,Math.PI*2);
+          ctx.fill();
+        });
+        ctx.fillStyle = "#a9dfa9";
+        ctx.beginPath();
+        ctx.moveTo(0,285);
+        ctx.quadraticCurveTo(180,218,350,286);
+        ctx.quadraticCurveTo(525,214,710,280);
+        ctx.quadraticCurveTo(830,238,900,270);
+        ctx.lineTo(900,370);
+        ctx.lineTo(0,370);
+        ctx.fill();
+        ctx.fillStyle = "#79c985";
+        ctx.fillRect(0,groundY,width,height-groundY);
+        ctx.fillStyle = "#5eb66d";
+        ctx.fillRect(0,groundY,width,9);
+        ctx.fillStyle = "rgba(255,255,255,.38)";
+        for (let x=25; x<width; x+=74) {
+          ctx.beginPath();
+          ctx.ellipse(x,386+(x%3)*5,3,5,-.4,0,Math.PI*2);
+          ctx.fill();
+        }
+      }
+
+      function drawKen() {
+        const bob = state === "running" && kenY === groundY ? Math.sin(runTime*13)*3 : 0;
+        const feet = kenY + bob;
+        ctx.save();
+        ctx.translate(kenX,feet);
+        ctx.fillStyle = "rgba(27,76,88,.18)";
+        ctx.beginPath();
+        ctx.ellipse(0,3,44,9,0,0,Math.PI*2);
+        ctx.fill();
+        const stride = kenY === groundY ? Math.sin(runTime*13)*5 : 0;
+        ctx.strokeStyle = "#687687";
+        ctx.lineWidth = 13;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-12,-43);
+        ctx.lineTo(-15+stride,-13);
+        ctx.lineTo(-22+stride,-4);
+        ctx.moveTo(12,-43);
+        ctx.lineTo(15-stride,-13);
+        ctx.lineTo(23-stride,-4);
+        ctx.stroke();
+        ctx.strokeStyle = "#30445a";
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.moveTo(-25+stride,-4);
+        ctx.lineTo(-11+stride,-4);
+        ctx.moveTo(19-stride,-4);
+        ctx.lineTo(33-stride,-4);
+        ctx.stroke();
+        ctx.fillStyle = "#3e91e8";
+        roundedRect(-27,-91,54,55,17);
+        ctx.fill();
+        ctx.fillStyle = "#2c7bd1";
+        ctx.fillRect(-5,-85,10,39);
+        ctx.strokeStyle = "#f4bd91";
+        ctx.lineWidth = 11;
+        ctx.beginPath();
+        ctx.moveTo(-25,-78);
+        ctx.lineTo(-37,-54+Math.sin(runTime*13)*4);
+        ctx.moveTo(25,-78);
+        ctx.lineTo(37,-55-Math.sin(runTime*13)*4);
+        ctx.stroke();
+        ctx.fillStyle = "#f4bd91";
+        ctx.beginPath();
+        ctx.arc(0,-117,28,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#24212a";
+        ctx.beginPath();
+        ctx.moveTo(-28,-117);
+        ctx.quadraticCurveTo(-34,-149,-8,-150);
+        ctx.quadraticCurveTo(10,-163,28,-139);
+        ctx.quadraticCurveTo(36,-129,27,-112);
+        ctx.lineTo(19,-121);
+        ctx.lineTo(10,-114);
+        ctx.lineTo(1,-124);
+        ctx.lineTo(-10,-115);
+        ctx.lineTo(-19,-124);
+        ctx.lineTo(-25,-108);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#25394b";
+        ctx.beginPath();
+        ctx.arc(-9,-117,2.7,0,Math.PI*2);
+        ctx.arc(10,-117,2.7,0,Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = "#ba655a";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(1,-108,7,.15,Math.PI-.15);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawBroom(broom) {
+        ctx.save();
+        ctx.translate(broom.x+54,groundY-19);
+        ctx.rotate(-.08);
+        ctx.strokeStyle = "#a76b3d";
+        ctx.lineWidth = 9;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-5,0);
+        ctx.lineTo(82,0);
+        ctx.stroke();
+        ctx.fillStyle = "#e9a74f";
+        ctx.beginPath();
+        ctx.moveTo(-17,-17);
+        ctx.quadraticCurveTo(-5,-25,4,-10);
+        ctx.lineTo(1,16);
+        ctx.quadraticCurveTo(-14,23,-25,12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#ca833b";
+        ctx.lineWidth = 2;
+        for (let i=0; i<5; i++) {
+          ctx.beginPath();
+          ctx.moveTo(-19+i*4,-10);
+          ctx.lineTo(-19+i*4,14);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawScore() {
+        ctx.fillStyle = "rgba(255,255,255,.82)";
+        roundedRect(28,24,178,62,18);
+        ctx.fill();
+        ctx.fillStyle = "#24445d";
+        ctx.font = "700 20px Trebuchet MS, sans-serif";
+        ctx.fillText("ĐIỂM",48,50);
+        ctx.font = "800 27px Trebuchet MS, sans-serif";
+        ctx.fillText(String(Math.floor(score)).padStart(3,"0"),48,76);
+        ctx.font = "700 15px Trebuchet MS, sans-serif";
+        ctx.fillStyle = "#53758b";
+        ctx.fillText(`Kỷ lục: ${best}`,122,64);
+      }
+
+      function draw() {
+        ctx.clearRect(0,0,width,height);
+        drawBackground();
+        brooms.forEach(drawBroom);
+        drawKen();
+        drawScore();
+      }
+
+      function showOverlay(title,message,buttonText) {
+        overlayTitle.textContent = title;
+        overlayMessage.textContent = message;
+        startButton.textContent = buttonText;
+        overlay.hidden = false;
+        jumpButton.disabled = true;
+      }
+
+      function startGame() {
+        score = 0;
+        speed = 360;
+        distance = 0;
+        nextBroomAt = 560;
+        kenY = groundY;
+        kenVelocity = 0;
+        runTime = 0;
+        brooms = [];
+        state = "running";
+        overlay.hidden = true;
+        jumpButton.disabled = false;
+        status.textContent = "Trò chơi bắt đầu. Nhảy qua chổi để ghi điểm.";
+        lastTime = performance.now();
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(tick);
+      }
+
+      function jump() {
+        if (state === "running" && kenY === groundY) kenVelocity = -700;
+      }
+
+      function endGame() {
+        state = "over";
+        best = Math.max(best,Math.floor(score));
+        showOverlay("Ôi, chổi tới rồi!",`Ken đã đạt ${Math.floor(score)} điểm. Thử lại để lập kỷ lục mới nhé!`,"Chơi lại");
+        status.textContent = `Kết thúc trò chơi. Bạn đạt ${Math.floor(score)} điểm.`;
+      }
+
+      function tick(now) {
+        const delta = Math.min((now-lastTime)/1000,.04);
+        lastTime = now;
+        if (state !== "running") return;
+        runTime += delta;
+        score += delta*10;
+        speed = Math.min(620,360+score*1.5);
+        kenVelocity += 1850*delta;
+        kenY = Math.min(groundY,kenY+kenVelocity*delta);
+        if (kenY === groundY) kenVelocity = 0;
+        distance += speed*delta;
+        brooms.forEach(broom => { broom.x -= speed*delta; });
+        brooms = brooms.filter(broom => broom.x > -150);
+        if (distance >= nextBroomAt) {
+          brooms.push({x:width+15});
+          nextBroomAt = distance+330+Math.random()*230;
+        }
+        const kenBox = {left:kenX-29,right:kenX+29,bottom:kenY-3};
+        const collision = brooms.some(broom => kenBox.right > broom.x+5 && kenBox.left < broom.x+105 && kenBox.bottom > groundY-43);
+        draw();
+        if (collision) {
+          endGame();
+          draw();
+          return;
+        }
+        frame = requestAnimationFrame(tick);
+      }
+
+      startButton.addEventListener("click",startGame);
+      jumpButton.addEventListener("click",jump);
+      canvas.addEventListener("pointerdown",() => { if (state === "running") jump(); });
+      window.addEventListener("keydown",event => {
+        if (event.code === "Space" || event.code === "ArrowUp") {
+          event.preventDefault();
+          if (state === "running") jump();
+          else startGame();
+        }
+      });
+      window.addEventListener("resize",resizeCanvas);
+      resizeCanvas();
+    })();
+  </script>
+</body>
+</html>

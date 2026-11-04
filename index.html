@@ -83,6 +83,28 @@
       transform: rotate(-18deg);
     }
 
+    .game-link {
+      position: fixed;
+      top: 24px;
+      right: 28px;
+      z-index: 100;
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 999px;
+      background: rgba(15,15,20,0.68);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 650;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .game-link:hover {
+      background: var(--metfone-red);
+      transform: translateY(-2px);
+    }
+
     /* ===== Sections ===== */
     section {
       min-height: 100vh;
@@ -367,6 +389,7 @@
     /* Responsive */
     @media (max-width: 700px) {
       .logo { top: 18px; left: 18px; font-size: 22px; }
+      .game-link { top: 14px; right: 14px; padding: 9px 12px; font-size: 0.8rem; }
       .devices-grid { grid-template-columns: repeat(2, 1fr); }
       .visual-card img { height: 240px; }
       .energy-flow { height: 140px; }
@@ -383,6 +406,7 @@
   <div class="logo">
     metf<span class="o"></span>ne
   </div>
+  <a class="game-link" href="game.html" aria-label="Chơi game Ken né chổi">🎮 Chơi game Ken</a>
 
   <!-- ========== 1. HERO ========== -->
   <section id="hero">
